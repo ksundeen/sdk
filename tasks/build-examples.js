@@ -53,7 +53,7 @@ function augmentExamples(files, metalsmith, done) {
     }
     if (filename.indexOf('index.html') !== -1 && filename.indexOf('.swp') === -1) {
       if (!file.layout) {
-        throw new Error(`${filename}: Missing "layout" in YAML front-matter`);
+        //throw new Error(`${filename}: Missing "layout" in YAML front-matter`);
       }
       file.js = {
         tag: `<script src="./${id}.bundle.js"></script>`,

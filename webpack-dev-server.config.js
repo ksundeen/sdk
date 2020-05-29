@@ -10,7 +10,7 @@ const config = {
   resolve: {
     alias: {
       'webmap-sdk': path.resolve(__dirname, 'src/'),
-    },
+    }
   },
   // Entry points to the project
   entry: entry,
@@ -29,7 +29,7 @@ const config = {
     },
   },
   devtool: 'cheap-module-source-map',
-  node: {fs: 'empty'},
+  node: { fs: 'empty' },
   output: {
     path: __dirname, // Path of output file
     // [name] refers to the entry point's name.

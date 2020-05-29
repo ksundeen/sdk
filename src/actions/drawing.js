@@ -15,8 +15,8 @@
  * @desc Actions for interacting with the map.
  */
 
-import {DRAWING} from '../action-types';
-import {INTERACTIONS} from '../constants';
+import { DRAWING } from '../action-types';
+import { INTERACTIONS } from '../constants';
 
 /** Action to start an interaction on the map.
  *  @param {string} sourceName The name of the source on which the action takes place.
@@ -123,9 +123,11 @@ export function setMeasureFeature(feature, segments) {
  *
  *  @returns {Object} A measurement action.
  */
-export function finalizeMeasureFeature() {
+export function finalizeMeasureFeature(feature, segments) {
   return {
     type: DRAWING.FINALIZE_MEASURE_FEATURE,
+    feature: feature,
+    segments: segments
   };
 }
 
@@ -135,9 +137,11 @@ export function finalizeMeasureFeature() {
  *
  *  @returns {Object} A measurement action.
  */
-export function finishMeasureGeometry() {
+export function finishMeasureGeometry(feature, segments) {
   return {
     type: DRAWING.FINISH_MEASURE_GEOMETRY,
+    feature: feature,
+    segments: segments
   };
 }
 
@@ -147,6 +151,7 @@ export function finishMeasureGeometry() {
 export function clearMeasureFeature() {
   return {
     type: DRAWING.CLEAR_MEASURE_FEATURE,
+    measuredFeautres: []
   };
 }
 

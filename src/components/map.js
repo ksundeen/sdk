@@ -15,34 +15,34 @@ import fetch from 'isomorphic-fetch';
 
 import uuid from 'uuid';
 
-import {featureFilter as createFilter} from '@mapbox/mapbox-gl-style-spec';
+import { featureFilter as createFilter } from '@mapbox/mapbox-gl-style-spec';
 
 import PropTypes from 'prop-types';
 import React from 'react';
 import ReactDOM from 'react-dom';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 
-import {applyBackground, applyStyle} from 'ol-mapbox-style';
+import { applyBackground, applyStyle } from 'ol-mapbox-style';
 
 import OlMap from 'ol/Map';
 import View from 'ol/View';
 import Overlay from 'ol/Overlay';
-import {defaults as interactionDefaults} from 'ol/interaction';
+import { defaults as interactionDefaults } from 'ol/interaction';
 
 import PolygonGeom from 'ol/geom/Polygon';
 import MultiPolygonGeom from 'ol/geom/MultiPolygon';
 
-import {unByKey} from 'ol/Observable';
+import { unByKey } from 'ol/Observable';
 
-import {transform, transformExtent, toLonLat} from 'ol/proj';
-import {toStringHDMS} from 'ol/coordinate';
-import {getDistance, getArea} from 'ol/sphere';
+import { transform, transformExtent, toLonLat } from 'ol/proj';
+import { toStringHDMS } from 'ol/coordinate';
+import { getDistance, getArea } from 'ol/sphere';
 
 import TileLayer from 'ol/layer/Tile';
 import XyzSource from 'ol/source/XYZ';
 import TileWMSSource from 'ol/source/TileWMS';
 import TileJSON from 'ol/source/TileJSON';
-import {createXYZ} from 'ol/tilegrid';
+import { createXYZ } from 'ol/tilegrid';
 
 import VectorTileLayer from 'ol/layer/VectorTile';
 import VectorTileSource from 'ol/source/VectorTile';
@@ -59,7 +59,7 @@ import VectorSource from 'ol/source/Vector';
 import GeoJsonFormat from 'ol/format/GeoJSON';
 import EsriJsonFormat from 'ol/format/EsriJSON';
 
-import DrawInteraction, {createBox} from 'ol/interaction/Draw';
+import DrawInteraction, { createBox } from 'ol/interaction/Draw';
 import ModifyInteraction from 'ol/interaction/Modify';
 import SelectInteraction from 'ol/interaction/Select';
 
@@ -70,19 +70,19 @@ import SpriteStyle from '../style/sprite';
 
 import AttributionControl from 'ol/control/Attribution';
 
-import {bbox as bboxStrategy, all as allStrategy} from 'ol/loadingstrategy';
+import { bbox as bboxStrategy, all as allStrategy } from 'ol/loadingstrategy';
 
-import {updateLayer, setView, setBearing} from '../actions/map';
-import {setMapSize, setMousePosition, setMapExtent, setResolution, setProjection, setSourceError, clearSourceErrors, setMapLoaded, setMapLoading} from '../actions/mapinfo';
-import {INTERACTIONS, LAYER_VERSION_KEY, SOURCE_VERSION_KEY, TIME_KEY, TIME_START_KEY, QUERYABLE_KEY, QUERY_ENDPOINT_KEY, QUERY_TYPE_KEY, QUERY_PARAMS_KEY, MIN_ZOOM_KEY, MAX_ZOOM_KEY, QUERY_TYPE_WFS, GEOMETRY_NAME_KEY, SOURCES_FETCH_OPTIONS_KEY} from '../constants';
-import {dataVersionKey} from '../reducers/map';
-import MapCommon, {MapRender} from './map-common';
+import { updateLayer, setView, setBearing } from '../actions/map';
+import { setMapSize, setMousePosition, setMapExtent, setResolution, setProjection, setSourceError, clearSourceErrors, setMapLoaded, setMapLoading } from '../actions/mapinfo';
+import { INTERACTIONS, LAYER_VERSION_KEY, SOURCE_VERSION_KEY, TIME_KEY, TIME_START_KEY, QUERYABLE_KEY, QUERY_ENDPOINT_KEY, QUERY_TYPE_KEY, QUERY_PARAMS_KEY, MIN_ZOOM_KEY, MAX_ZOOM_KEY, QUERY_TYPE_WFS, GEOMETRY_NAME_KEY, SOURCES_FETCH_OPTIONS_KEY } from '../constants';
+import { dataVersionKey } from '../reducers/map';
+import MapCommon, { MapRender } from './map-common';
 
-import {finalizeMeasureFeature, setMeasureFeature, clearMeasureFeature} from '../actions/drawing';
+import { finalizeMeasureFeature, setMeasureFeature, clearMeasureFeature } from '../actions/drawing';
 
 import ClusterSource from '../source/cluster';
 
-import {parseQueryString, jsonClone, jsonEquals, getLayerById, degreesToRadians, radiansToDegrees, getKey, encodeQueryObject, isLayerVisible} from '../util';
+import { parseQueryString, jsonClone, jsonEquals, getLayerById, degreesToRadians, radiansToDegrees, getKey, encodeQueryObject, isLayerVisible } from '../util';
 
 import fetchJsonp from 'fetch-jsonp';
 
@@ -128,7 +128,7 @@ function getVersion(obj, key) {
  * @returns {Function} Tile loading function which uses fetch.
  */
 function authTileLoader(fetchOptions) {
-  return function(tile, src) {
+  return function (tile, src) {
     fetch(src, fetchOptions)
       .then(r => r.blob())
       .then((imgData) => {
@@ -150,7 +150,7 @@ function authTileLoader(fetchOptions) {
  * @returns {Function} Tile loading function which uses fetch.
  */
 function authVectorTileLoader(fetchOptions) {
-  return function(tile, url) {
+  return function (tile, url) {
     const loader = () => {
       fetch(url, fetchOptions)
         .then(r => r.arrayBuffer())
@@ -174,7 +174,7 @@ function authVectorTileLoader(fetchOptions) {
  * @param {Object} glSource The Mapbox GL map source containing a 'tiles' property.
  * @param {Object} mapProjection The OpenLayers projection object.
  * @param {string} time TIME parameter.
- * @param {Object} fetchOptions Options to use for fetch calls.
+ * @param {Object} fetchOptions Options to use for fetch calls. Links to commonProp-includeFetchOptions, (bool) for true=> use provided fetchOptions; false=> skip fetchOptions. Default = true to include fetchOptions.
  *
  * @returns {Object} Configured OpenLayers TileWMSSource or XyzSource.
  */
@@ -187,9 +187,16 @@ function configureTileSource(glSource, mapProjection, time, fetchOptions) {
     tileSize: glSource.tileSize || 512,
     crossOrigin: 'crossOrigin' in glSource ? glSource.crossOrigin : 'anonymous',
     projection: mapProjection,
+    /** @UPDATE 5/26/2020 to allow using auth or open auth. */
+    includeFetchOptions: 'includeFetchOptions' in glSource ? glSource.includeFetchOptions : true,
+    /******* */
   };
   // when there is an authorization header, enable the async loader.
-  if (fetchOptions.headers && fetchOptions.headers.get('Authorization')) {
+  // if (fetchOptions.headers && fetchOptions.headers.get('Authorization')) {
+  /** @UPDATE 5/26/2020 to allow using auth or open auth. */
+  if (fetchOptions.headers && fetchOptions.headers.get('Authorization') && commonProps.includeFetchOptions) {
+    /******* */
+
     commonProps.tileLoadFunction = authTileLoader(fetchOptions);
   }
   // check to see if the url is a wms request.
@@ -211,12 +218,12 @@ function configureTileSource(glSource, mapProjection, time, fetchOptions) {
     return new TileWMSSource(Object.assign({
       url: tile_url.split('?')[0],
       params,
-    }, commonProps, {projection: layerProjection}));
+    }, commonProps, { projection: layerProjection }));
   } else {
     const source = new XyzSource(Object.assign({
       urls: glSource.tiles,
     }, commonProps));
-    source.setTileLoadFunction(function(tile, src) {
+    source.setTileLoadFunction(function (tile, src) {
       // copy the src string.
       let img_src = src.slice();
       if (src.indexOf(BBOX_STRING) !== -1) {
@@ -319,7 +326,7 @@ function configureMvtSource(glSource, accessToken, fetchOptions) {
       let tile_load_fn;
       // check the first tile to see if we need to do BBOX subsitution
       if (glSource.tiles[0].indexOf(BBOX_STRING) !== -1) {
-        tile_url_fn = function(urlTileCoord, pixelRatio, projection) {
+        tile_url_fn = function (urlTileCoord, pixelRatio, projection) {
           // copy the src string.
           let img_src = glSource.tiles[0].slice();
           // check to see if a cache invalidation has been requested.
@@ -385,7 +392,7 @@ function addParam(url, paramName, paramValue) {
 }
 
 function getLoaderFunction(glSource, mapProjection, baseUrl, fetchOptions) {
-  return function(bbox, resolution, projection) {
+  return function (bbox, resolution, projection) {
     // setup a feature promise to handle async loading
     // of features.
     let features_promise;
@@ -431,7 +438,7 @@ function getLoaderFunction(glSource, mapProjection, baseUrl, fetchOptions) {
         //  are no features to add.
         if (features) {
           // setup the projection options.
-          const readFeatureOpt = {featureProjection: mapProjection};
+          const readFeatureOpt = { featureProjection: mapProjection };
 
           // bulk load the feature data
           this.addFeatures(GEOJSON_FORMAT.readFeatures(features, readFeatureOpt));
@@ -685,7 +692,7 @@ export class Map extends React.Component {
           const source = layer.source;
           const olSource = this.sources[source];
           if (olSource && olSource instanceof TileWMSSource) {
-            olSource.updateParams({TIME: this.props.map.metadata[TIME_KEY]});
+            olSource.updateParams({ TIME: this.props.map.metadata[TIME_KEY] });
           }
         }
       }
@@ -704,7 +711,7 @@ export class Map extends React.Component {
         }
         if (timestamp) {
           if (typeof src.updateParams === 'function') {
-            src.updateParams({'_CK': timestamp});
+            src.updateParams({ '_CK': timestamp });
           } else {
             // set the time stamp for other loaders which
             //  check for the _ck attribute.
@@ -726,7 +733,7 @@ export class Map extends React.Component {
       // center has not been set yet or differs
       if (prevProps.map.center === undefined ||
         (prevProps.map.center[0] !== this.props.map.center[0]
-        || prevProps.map.center[1] !== this.props.map.center[1])) {
+          || prevProps.map.center[1] !== this.props.map.center[1])) {
         // convert the center point to map coordinates.
         const center = transform(this.props.map.center, 'EPSG:4326', map_proj);
         map_view.setCenter(center);
@@ -776,7 +783,7 @@ export class Map extends React.Component {
 
 
             if (force_redraw || (props.map.metadata !== undefined &&
-                props.map.metadata[version_key] !== this.props.map.metadata[version_key])) {
+              props.map.metadata[version_key] !== this.props.map.metadata[version_key])) {
               const next_src = this.props.map.sources[src_name];
               updateGeojsonSource(this.sources[src_name], next_src, map_view, props.mapbox.baseUrl, this.getFetchOptions(props, src_name));
             }
@@ -797,7 +804,8 @@ export class Map extends React.Component {
         this.updateInteraction(this.props.drawing);
       }
       if (this.props.drawing.measureFinishGeometry) {
-        this.finishMeasureGeometry();
+        /** @UPDATE - 5/22/20 to send drawn geometry to be saved. */
+        this.finishMeasureGeometry(this.props.drawing.feature, this.props.drawing.segments);
       }
     }
 
@@ -907,14 +915,14 @@ export class Map extends React.Component {
       });
     };
 
-    const addSource = function(src_name, source) {
+    const addSource = function (src_name, source) {
       if (source) {
         this.sources[src_name] = source;
         listenForError(src_name, source);
         listenForLoad(source);
       }
     };
-    const addAndUpdateSource = function(src_name, source) {
+    const addAndUpdateSource = function (src_name, source) {
       if (source) {
         this.sources[src_name] = source;
         this.updateLayerSource(src_name);
@@ -954,7 +962,7 @@ export class Map extends React.Component {
       // this handles update the named source and then subsequently updating
       // the layers.
       if (src && (src.cluster !== sourcesDef[src_name].cluster
-          || src.clusterRadius !== sourcesDef[src_name].clusterRadius)) {
+        || src.clusterRadius !== sourcesDef[src_name].clusterRadius)) {
         // reconfigure the source for clustering.
         promises.push(configureSource(
           sourcesDef[src_name],
@@ -1003,11 +1011,11 @@ export class Map extends React.Component {
       // loop over the layers to see which one matches
       for (let l = 0, ll = layers.length; l < ll; ++l) {
         const layer = layers[l];
-        if (!layer.filter || layer.filter(undefined, {properties: feature.getProperties()})) {
+        if (!layer.filter || layer.filter(undefined, { properties: feature.getProperties() })) {
           if (!spriteOptions[layer.id].rotation || (spriteOptions[layer.id].rotation && !spriteOptions[layer.id].rotation.property)) {
             if (!styleCache[layer.id]) {
               const sprite = new SpriteStyle(spriteOptions[layer.id]);
-              styleCache[layer.id] = new Style({image: sprite});
+              styleCache[layer.id] = new Style({ image: sprite });
               this.map.on('postcompose', (e) => {
                 sprite.update(e);
               });
@@ -1023,7 +1031,7 @@ export class Map extends React.Component {
               const options = jsonClone(layer.metadata['bnd:animate-sprite']);
               options.rotation = rotation;
               const sprite = new SpriteStyle(options);
-              const style = new Style({image: sprite});
+              const style = new Style({ image: sprite });
               this.map.on('postcompose', (e) => {
                 sprite.update(e);
               });
@@ -1136,7 +1144,7 @@ export class Map extends React.Component {
           opacity: layers[0].paint ? layers[0].paint['raster-opacity'] : undefined,
         });
       default:
-        // pass, let the function return null
+      // pass, let the function return null
     }
 
     // this didn't work out.
@@ -1235,7 +1243,7 @@ export class Map extends React.Component {
       // if the layer is not on the map, create it.
       if (!(group_name in this.layers)) {
         if (lyr_group[0].type === 'background') {
-          applyBackground(this.map, {layers: lyr_group});
+          applyBackground(this.map, { layers: lyr_group });
         } else {
           const hydrated_group = hydrateLayerGroup(layersDef, lyr_group);
           const new_layer = this.configureLayer(source_name, source, hydrated_group, sprite, declutter, i);
@@ -1393,8 +1401,8 @@ export class Map extends React.Component {
           layer_name = layer['source-layer'] || layer.id;
           url = this.sources[layer.source].getGetFeatureInfoUrl(
             evt.coordinate, map_resolution, map_prj, {
-              INFO_FORMAT: 'application/json',
-            },
+            INFO_FORMAT: 'application/json',
+          },
           );
           fetch(url, fetchOptions).then(
             response => response.json(),
@@ -1403,9 +1411,9 @@ export class Map extends React.Component {
             .then((json) => {
               features_by_layer[layer_name] = GEOJSON_FORMAT.writeFeaturesObject(
                 GEOJSON_FORMAT.readFeatures(json), {
-                  featureProjection: GEOJSON_FORMAT.readProjection(json),
-                  dataProjection: 'EPSG:4326',
-                },
+                featureProjection: GEOJSON_FORMAT.readProjection(json),
+                dataProjection: 'EPSG:4326',
+              },
               ).features;
               resolve(features_by_layer);
             }).catch((error) => {
@@ -1452,9 +1460,9 @@ export class Map extends React.Component {
                 }
                 features_by_layer[layer.source] = GEOJSON_FORMAT.writeFeaturesObject(
                   intersection, {
-                    featureProjection: GEOJSON_FORMAT.readProjection(json),
-                    dataProjection: 'EPSG:4326',
-                  },
+                  featureProjection: GEOJSON_FORMAT.readProjection(json),
+                  dataProjection: 'EPSG:4326',
+                },
                 ).features;
                 resolve(features_by_layer);
               }).catch((error) => {
@@ -1484,12 +1492,12 @@ export class Map extends React.Component {
               }
               features_by_layer[layer_name] = GEOJSON_FORMAT.writeFeaturesObject(
                 features, {
-                  featureProjection: map_prj,
-                  dataProjection: 'EPSG:4326',
-                },
+                featureProjection: map_prj,
+                dataProjection: 'EPSG:4326',
+              },
               ).features;
               resolve(features_by_layer);
-            }).catch(function(error) {
+            }).catch(function (error) {
               console.error('An error occured.', error);
             });
           }));
@@ -1553,9 +1561,11 @@ export class Map extends React.Component {
             dataProjection: 'EPSG:4326',
           }));
         }
-      }, {layerFilter: (candidate) => {
-        return !this.shouldSkipForQuery(candidate);
-      }});
+      }, {
+        layerFilter: (candidate) => {
+          return !this.shouldSkipForQuery(candidate);
+        }
+      });
       resolve(features_by_layer);
     });
 
@@ -1614,7 +1624,7 @@ export class Map extends React.Component {
     if (this.props.hover) {
       this.map.on('pointermove', (evt) => {
         const lngLat = toLonLat(evt.coordinate);
-        this.props.setMousePosition({lng: lngLat[0], lat: lngLat[1]}, evt.coordinate);
+        this.props.setMousePosition({ lng: lngLat[0], lat: lngLat[1] }, evt.coordinate);
       });
     }
 
@@ -1646,7 +1656,8 @@ export class Map extends React.Component {
     });
 
     // when the map is clicked, handle the event.
-    this.map.on('singleclick', (evt) => {
+    /** @UPDATE - 5/21/20 modified from singleclick to click to capture both dblclick and singleclick events. */
+    this.map.on('click', (evt) => {
       if (this.activeInteractions !== null) {
         return;
       }
@@ -1733,7 +1744,7 @@ export class Map extends React.Component {
       drawObj = this.setStyleFunc(drawObj, drawingProps.modifyStyle);
       const select = new SelectInteraction(drawObj);
       if (drawingProps.feature) {
-        const readFeatureOpt = {featureProjection: this.map.getView().getProjection()};
+        const readFeatureOpt = { featureProjection: this.map.getView().getProjection() };
         const feature = GEOJSON_FORMAT.readFeature(drawingProps.feature, readFeatureOpt);
         select.getFeatures().push(feature);
         select.setActive(false);
@@ -1782,7 +1793,7 @@ export class Map extends React.Component {
           geometryFunction
         };
       } else {
-        drawObj = {type: drawingProps.interaction};
+        drawObj = { type: drawingProps.interaction };
       }
       const styleDrawObj = this.setStyleFunc(drawObj, drawingProps.editStyle);
       const draw = new DrawInteraction(styleDrawObj);
@@ -1817,10 +1828,13 @@ export class Map extends React.Component {
         this.props.setMeasureGeometry(geom, proj);
       });
 
-      measure.on('drawend', () => {
+      /** @UPDATE - 5/21/20 to handle saving finalized measure feature. */
+      measure.on('drawend', (evt) => {
+        const geom = evt.feature.getGeometry();
+        const proj = this.map.getView().getProjection();
         // remove the listener
         unByKey(measure_listener);
-        this.props.finalizeMeasureFeature();
+        this.props.finalizeMeasureFeature(geom, proj);
       });
 
       this.activeInteractions = [measure];
@@ -1832,9 +1846,11 @@ export class Map extends React.Component {
       }
     }
   }
-  finishMeasureGeometry() {
+  finishMeasureGeometry(geom, proj) {
     if (this.activeInteractions && this.activeInteractions.length === 1) {
       this.activeInteractions[0].finishDrawing();
+      /** @UPDATE - 5/22/20 included feature and projection to send to drawing action. */
+      this.props.finishMeasureGeometry(geom, proj);
     }
   }
   setStyleFunc(styleObj, style) {
@@ -1949,7 +1965,7 @@ function mapDispatchToProps(dispatch) {
           segments.push(getDistance(a, b));
         }
       } else if (geom.type === 'Polygon' && geom.coordinates.length > 0) {
-        segments.push(getArea(geometry, {projection}));
+        segments.push(getArea(geometry, { projection }));
       }
 
 
@@ -1959,8 +1975,27 @@ function mapDispatchToProps(dispatch) {
         geometry: geom,
       }, segments));
     },
-    finalizeMeasureFeature: () => {
-      dispatch(finalizeMeasureFeature());
+    /** @UPDATE - 5/22/20 copied same code from setMeasureGeometry and replaced  finalizeMeasureFeature*/
+    finalizeMeasureFeature: (geometry, projection) => {
+      const geom = GEOJSON_FORMAT.writeGeometryObject(geometry, {
+        featureProjection: projection,
+        dataProjection: 'EPSG:4326',
+      });
+      const segments = [];
+      if (geom.type === 'LineString') {
+        for (let i = 0, ii = geom.coordinates.length - 1; i < ii; i++) {
+          const a = geom.coordinates[i];
+          const b = geom.coordinates[i + 1];
+          segments.push(getDistance(a, b));
+        }
+      } else if (geom.type === 'Polygon' && geom.coordinates.length > 0) {
+        segments.push(getArea(geometry, { projection }));
+      }
+      dispatch(setMeasureFeature({
+        type: 'Feature',
+        properties: {},
+        geometry: geom,
+      }, segments));
     },
     clearMeasureFeature: () => {
       dispatch(clearMeasureFeature());
@@ -1999,9 +2034,9 @@ export function getOLStyleFunctionFromMapboxStyle(styles) {
     sources,
   };
   const olLayer = new VectorLayer();
-  return mb2olstyle(olLayer, glStyle, styles.map(function(style) {
+  return mb2olstyle(olLayer, glStyle, styles.map(function (style) {
     return style.id;
   }));
 }
 
-export default connect(mapStateToProps, mapDispatchToProps, undefined, {forwardRef: true})(Map);
+export default connect(mapStateToProps, mapDispatchToProps, undefined, { forwardRef: true })(Map);

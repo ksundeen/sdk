@@ -19,7 +19,7 @@
  *
  */
 
-import {DRAWING} from '../action-types';
+import { DRAWING } from '../action-types';
 
 const defaultState = {
   interaction: null,
@@ -35,6 +35,9 @@ const defaultState = {
   modifyStyle: null,
   selectStyle: null,
   measureStyle: null,
+  /** @UPDATE - 5/26/20 adding new reducer variable, array of measured features. */
+  measuredFeatures: [],
+  /****** */
 };
 
 /** Drawing reducer.
@@ -54,8 +57,11 @@ export default function drawingReducer(state = defaultState, action) {
         afterMode: action.afterMode,
         currentModeOptions: null,
         measureDone: false,
-        measureFeature: null,
-        measureSegments: null
+
+        /** @UPDATE 5/26/20 - Updated from null to hold measured features and segments when drawing is ended. */
+        measureFeature: action.feature,
+        measureSegments: action.segments,
+        /****** */
       });
     case DRAWING.START:
       return Object.assign({}, state, {
@@ -65,8 +71,10 @@ export default function drawingReducer(state = defaultState, action) {
         afterMode: action.afterMode,
         currentModeOptions: action.currentModeOptions,
         measureDone: false,
-        measureFeature: null,
-        measureSegments: null,
+        /** @UPDATE - 5/26/20 - Updated from null to hold measured features and segments. */
+        measureFeature: action.feature,
+        measureSegments: action.segments,
+        /****** */
         feature: action.feature,
       });
     case DRAWING.SET_EDIT_STYLE:
@@ -92,9 +100,17 @@ export default function drawingReducer(state = defaultState, action) {
         measureSegments: action.segments,
       });
     case DRAWING.FINALIZE_MEASURE_FEATURE:
+      var newMeasuredFeatureArray = state.measuredFeatures.slice();
+      newMeasuredFeatureArray.splice(0, 0, { feature: action.feature, segments: action.segments })
+
       return Object.assign({}, state, {
         measureDone: true,
         measureFinishGeometry: false,
+        /** @UPDATE - 5/26/20 Updated to included total measured features. */
+        measureFeature: action.feature,
+        measureSegments: action.segments,
+        measuredFeatures: newMeasuredFeatureArray,
+        /****** */
       });
     case DRAWING.FINISH_MEASURE_GEOMETRY:
       return Object.assign({}, state, {
@@ -105,6 +121,9 @@ export default function drawingReducer(state = defaultState, action) {
         measureFeature: null,
         measureSegments: null,
         measureDone: false,
+        /** @UPDATE - 5/26/20 added */
+        measuredFeatures: [],
+        /**** */
       });
     default:
       return state;

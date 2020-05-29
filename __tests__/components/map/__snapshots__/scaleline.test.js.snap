@@ -6,7 +6,7 @@ exports[`Scaleline tests create the correct scaleline in EPSG:4326 1`] = `"<div 
 
 exports[`Scaleline tests create the correct scaleline in degrees (minutes) 1`] = `"<div class=\\"sdk-scale-line\\"><div class=\\"sdk-scale-line-inner\\" style=\\"width: 75px;\\">0.005 ″</div></div>"`;
 
-exports[`Scaleline tests create the correct scaleline in degrees (seconds) 1`] = `"<div class=\\"sdk-scale-line\\"><div class=\\"sdk-scale-line-inner\\" style=\\"width: 90px;\\">0.00002 ″</div></div>"`;
+exports[`Scaleline tests create the correct scaleline in degrees (seconds) 1`] = `"<div class=\\"sdk-scale-line\\"><div class=\\"sdk-scale-line-inner\\" style=\\"width: 90px;\\">0.000019999999999999998 ″</div></div>"`;
 
 exports[`Scaleline tests create the correct scaleline in degrees 1`] = `"<div class=\\"sdk-scale-line\\"><div class=\\"sdk-scale-line-inner\\" style=\\"width: 115px;\\">0.5 ″</div></div>"`;
 

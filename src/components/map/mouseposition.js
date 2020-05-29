@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import {connect} from 'react-redux';
+import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 
 /** @module components/map/mouseposition
@@ -40,7 +40,7 @@ class MousePosition extends React.Component {
     if (mouseposition.lngLat !== null) {
       const text = this.props.templateFunction(mouseposition);
       return (
-        <div className={className} style={this.props.style} dangerouslySetInnerHTML={{__html: text}} />
+        <div className={className} style={this.props.style} dangerouslySetInnerHTML={{ __html: text }} />
       );
     } else {
       return false;
@@ -66,8 +66,8 @@ MousePosition.propTypes = {
 
 MousePosition.defaultProps = {
   templateFunction: (mouseposition) => {
-    const lng = mouseposition.lngLat.lng.toFixed(2);
-    const lat = mouseposition.lngLat.lat.toFixed(2);
+    const lng = mouseposition.lngLat.lng.toFixed(4); // updated from 2 sig. digits
+    const lat = mouseposition.lngLat.lat.toFixed(4); // updated from 2 sig. digits
     return `Longitude: ${lng}<br/>Latitude: ${lat}`;
   }
 };
